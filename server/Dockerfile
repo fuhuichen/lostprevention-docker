@@ -63,10 +63,21 @@ RUN npm install --save \
     socket.io-client@^4.8.1 \
     xml2js@^0.4.23
 
-# Remove build tools to reduce image size
+# Remove build tools to reduce image size, then reinstall runtime libraries
+# needed by native modules (ffi-napi, canvas/draw)
 RUN apt-get purge -y python3 python3-setuptools make g++ && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get update && apt-get install -y --no-install-recommends \
+    libatomic1 \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libjpeg-turbo8 \
+    libgif7 \
+    librsvg2-2 \
+    libpixman-1-0 \
+    libffi8 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create empty web directory to prevent Express static middleware errors
 # (frontend is served by nginx, not this container)

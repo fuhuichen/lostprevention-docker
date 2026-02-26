@@ -34,9 +34,9 @@ services:
       - mongodb
     volumes:
       # MongoDB connection config (override ip to point to mongodb service)
-      - ./config/.setting_db.json:/app/.setting_db.json:ro
+      - ./config/.setting_db.json:/app/.setting_db.json
       # Disable HTTPS (nginx handles SSL termination)
-      - ./config/.setting_core.json:/app/.setting_core.json:ro
+      - ./config/.setting_core.json:/app/.setting_core.json
       # Optional: persist logs
       - object-vision-logs:/app/logs
     healthcheck:
