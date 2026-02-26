@@ -1,0 +1,5 @@
+{
+    "collection": "ObjectVision",
+    "ip": "mongodb",
+    "port": 27017
+}

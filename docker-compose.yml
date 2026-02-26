@@ -1,0 +1,70 @@
+services:
+  nginx:
+    build:
+      context: ..
+      dockerfile: docker/nginx/Dockerfile
+      network: host
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-http://172.22.135.200:55000/}
+    container_name: object-vision-nginx
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    depends_on:
+      server:
+        condition: service_healthy
+    # Optional: mount SSL certificates for HTTPS
+    # volumes:
+    #   - ./certs:/etc/nginx/certs:ro
+    networks:
+      - object-vision-net
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ..
+      dockerfile: docker/server/Dockerfile
+      network: host
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-http://172.22.135.200:55000/}
+    container_name: object-vision-server
+    expose:
+      - "6090"
+    depends_on:
+      - mongodb
+    volumes:
+      # MongoDB connection config (override ip to point to mongodb service)
+      - ./config/.setting_db.json:/app/.setting_db.json:ro
+      # Disable HTTPS (nginx handles SSL termination)
+      - ./config/.setting_core.json:/app/.setting_core.json:ro
+      # Optional: persist logs
+      - object-vision-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6090/server/info"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - object-vision-net
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: object-vision-mongodb
+    volumes:
+      - mongodb-data:/data/db
+    # Uncomment below to expose MongoDB port to host
+    # ports:
+    #   - "27017:27017"
+    networks:
+      - object-vision-net
+    restart: unless-stopped
+
+networks:
+  object-vision-net:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  object-vision-logs:
